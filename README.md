@@ -4,41 +4,34 @@ Features
 
 Matrix Operations:
 
-  Support for basic matrix operations such as:
-
-    Addition
-    
-    Scaling
-    
-    Multiplication
-    
-    Transposition
+    Support for basic matrix operations such as:
+      Addition
+      Scaling
+      Multiplication
+      Transposition
 
   
-  In progress:
-  
-    Determinant
-    
-    Inversion
-    
-    Eigenvalues and eigenvectors
-    
-    Reduced Row Echelon Form
+    In progress:
+      Determinant
+      Inversion
+      Eigenvalues and eigenvectors
+      Reduced Row Echelon Form
 
 Vector Operations:
-  Support for basic vector operations such as:
-    Addition
-    Scaling
-    Inner Product
-    Outer Product
 
-  In progress:
-    Norm
-    Normalisation
-    Angle between 2 vectors
-    Projection
-    Distance between 2 vectors
-    If 2 vectors are orthogonal
+    Support for basic vector operations such as:
+      Addition
+      Scaling
+      Inner Product
+      Outer Product
+
+    In progress: 
+      Norm
+      Normalisation
+      Angle between 2 vectors
+      Projection
+      Distance between 2 vectors
+      If 2 vectors are orthogonal
 
 
 
