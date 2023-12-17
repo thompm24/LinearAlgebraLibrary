@@ -1,67 +1,115 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 typedef struct Matrix Matrix;
-struct Matrix{
+struct Matrix
+{
   int rows;
   int cols;
   double **data;
   Matrix *Transpose;
 };
 
-typedef struct{
+typedef struct
+{
   int size;
   double *data;
 } Vector;
 
-//Initialising matrices
+
+
+//                        Function Definitions
+
+
+
+
+//	Initialising Matrices
+
+
+//Initialise empty matrix
 void Matrix_Create_Empty(Matrix *m, int rows, int cols);
+
+//Initialise matrix of random values
 void Matrix_Rand(Matrix *m);
+
+//Allocates memory and  creates transpose attribute of and matrix;
 void Matrix_Create_Transpose(Matrix *m);
+
+//Initialise matrix from an array
 Matrix *Matrix_Create_Array(double *data, int rows, int cols);
 
+//Convert vector to a v-size x 1 matrix
 Matrix *Vector_Convert_Matrix(Vector *v);
 
-void Vector_Create_Empty(Vector *v, int size);
-void Vector_Create_Rand(Vector *v);
-Vector *Vector_Create_Array(double *data, int size);
+//Convert vector to a 1 x v->size matrix
 Matrix *Vector_Create_Transpose(Vector *v);
 
-/*
-  Still not finished these:
-  Vector *Vector_Product_Dot(Vector *v1, Vector *v2);
-  Matrix *Vector_Product_Outer(Vector *v1, Vector *v2);
-  Vector *Vector_Transformation(Vector *v, Matrix *m);
-*/
+
+//	Initialising Vectors
 
 
-//Operations
+//Initialise empty vector
+void Vector_Create_Empty(Vector *v, int size);
+
+//Initialise vector of random values
+void Vector_Create_Rand(Vector *v);
+
+//Initialise vector from array
+Vector *Vector_Create_Array(double *data, int size);
+
+
+//	Matrix Operations
+
+
+//Multiply 2 matrices
 Matrix *Matrix_Multiply(Matrix *m1, Matrix *m2);
 
-void printMatrix(Matrix *m);
+//Add 2 matrices
+Matrix *Matrix_Add(Matrix *m1, Matrix *m2);
 
-int main(int argc, char *argv)
+//Scale matric by n
+Matrix *Matrix_Scale(Matrix *m, double n);
+
+//Print matrix line-by-line
+void printMatrix(Matrix *);
+
+
+//	Vector Operations
+
+
+//Add 2 vectors
+Vector *Vector_Add(Vector *v1, Vector *v2);
+
+//Scalle a vector by n
+Vector *Vector_Scale(Vector *v, double n);
+
+//Get dot product of 2 vectors
+double Vector_Product_Dot(Vector *v1, Vector *v2);
+
+//Get outer product of 2 vectors
+Matrix *Vector_Product_Outer(Vector *v1, Vector *v2);
+
+void printVector(Vector *v);
+
+
+
+
+//                        Function Definitions
+
+
+
+
+void printVector(Vector *v)
 {
- // Vector *v1 = (Vector *)malloc(sizeof(Vector));
-  double a1[4] = {1, 2, 3, 4};
-  int row1 = 2;
-
-  Vector *v1 = Vector_Create_Array(a1, 4);
- // Matrix *m1 = (Matrix*)malloc(sizeof(Vector));
-  Matrix *m1 = Vector_Convert_Matrix(v1);
-
-  //Matrix *m2 = (Matrix *)malloc(sizeof(Matrix));
-  double a2[4] = {5, 6, 7, 8};
-  int row2 = 2;
-
-  Vector *v2 = Vector_Create_Array(a1, 4);
-  Matrix *m2 = Vector_Convert_Matrix(v2);
-  Matrix_Create_Transpose(m2);
-
-  Matrix *m3;
-  m3 = Matrix_Multiply(m2->Transpose, m1);
-
-  printMatrix(m3);
+  int i = 0;
+  int size = v->size;
+  while (i < size)
+  {
+    printf("%.2f", v->data[i]);
+    i++;
+    (i == size) ? printf("\n") : printf(" ");
+  }
 }
 
 void printMatrix(Matrix *m)
@@ -79,6 +127,29 @@ void printMatrix(Matrix *m)
     i++;
   }
 }
+
+Matrix *Vector_Transform_Matrix(Matrix *m, Vector *v)
+{
+  Matrix *mv = Vector_Convert_Matrix(v);
+  return Matrix_Multiply(m, mv);
+}
+
+double Vector_Product_Dot(Vector *v1, Vector *v2)
+{
+  Matrix *m1 = Vector_Convert_Matrix(v1);
+  Matrix_Create_Transpose(m1);
+  Matrix *m3 = Vector_Transform_Matrix(m1->Transpose, v2);
+  return m3->data[0][0];
+}
+Matrix *Vector_Product_Outer(Vector *v1, Vector *v2)
+{
+  Matrix *m1 = Vector_Convert_Matrix(v1);
+  Matrix *m2 = Vector_Convert_Matrix(v2);
+  Matrix_Create_Transpose(m2);
+  return Matrix_Multiply(m1, m2->Transpose);
+}
+
+
 
 void Matrix_Create_Empty(Matrix *m, int rows, int cols)
 {
@@ -179,10 +250,6 @@ Vector *Vector_Create_Array(double *data, int size) {
   return v;
 }
 
-
-
-
-
 Matrix *Matrix_Multiply(Matrix *m1, Matrix *m2)
 {
   int i, j, k, sumRowColij, rows, cols, rows2cols1;
@@ -218,7 +285,6 @@ Matrix *Matrix_Multiply(Matrix *m1, Matrix *m2)
   return m3;
 }
 
-
 Matrix *Matrix_Create_Array(double *data, int rows, int cols) {
   Matrix *m = (Matrix *)malloc(sizeof(Matrix));
   Matrix_Create_Empty(m, rows, cols);
@@ -231,4 +297,55 @@ Matrix *Matrix_Create_Array(double *data, int rows, int cols) {
   return m;
 }
 
+Matrix *Matrix_Add(Matrix *m1, Matrix *m2)
+{
+  int rows = m1->rows;
+  int cols = m1->cols;
 
+  if (rows != m2->rows || cols != m2->cols)
+  {
+    fprintf(stderr, "Failed matrix addition, matrices do not share dimensions");
+    printMatrix(m1);
+    printMatrix(m2);
+    return NULL;
+  }
+  Matrix *m3 = (Matrix *)malloc(sizeof(Matrix));
+  if (m3 == NULL)
+  {
+    perror("Failed to allocate memory\n");
+    return NULL;
+  }
+  Matrix_Create_Empty(m3, rows, cols);
+
+  int i = 0;
+  while (i < rows)
+  {
+    int j = 0;
+    while (j < cols)
+    {
+      m3->data[i][j] = m1->data[i][j] + m2->data[i][j];
+      j++;
+    }
+    i++;
+  }
+  return m3;
+}
+
+Vector *Vector_Add(Vector *v1, Vector *v2)
+{
+  int size = v1->size;
+  Vector *v3 = (Vector *)malloc(sizeof(Vector));
+  if (v3 == NULL)
+  {
+    perror("Failed to allocate memory\n");
+    return NULL;
+  }
+  Vector_Create_Empty(v3, size);
+  int i = 0;
+  while (i < size)
+  {
+    v3->data[i] = v1->data[i] + v2->data[i];
+    i++;
+  }
+  return v3;
+}
