@@ -2,7 +2,7 @@
 This is my linear algebra library written in C, designed for educational and development purposes. It provides functionalities for matrix and vector operations, ideal for students, educators, and developers interested in mathematics and computer science.
 Features
 
-Matrix Operations:
+Matrix Operations:\n
   Support for basic matrix operations such as:
     Addition
     Scaling
