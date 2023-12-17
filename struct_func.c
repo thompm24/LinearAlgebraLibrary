@@ -1,21 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "math.c"
 
 
 typedef struct Matrix Matrix;
+typedef struct Vector Vector;
 struct Matrix
 {
   int rows;
   int cols;
   double **data;
   Matrix *Transpose;
+  double determinant;
 };
 
-typedef struct
+struct Vector
 {
   int size;
   double *data;
-} Vector;
+  double Norm;
+  Vector *Normalise;
+  Matrix *Transpose;
+} ;
 
 
 
@@ -33,17 +39,20 @@ void Matrix_Create_Empty(Matrix *m, int rows, int cols);
 //Initialise matrix of random values
 void Matrix_Rand(Matrix *m);
 
-//Allocates memory and  creates transpose attribute of and matrix;
-void Matrix_Create_Transpose(Matrix *m);
-
-//Initialise matrix from an array
+//Initialise matrix from array
 Matrix *Matrix_Create_Array(double *data, int rows, int cols);
+
+//Allocates memory and  creates transpose attribute of and matrix;
+void Matrix_Generate_Transpose(Matrix *m);
+
+void Matrix_Generate_Determinant(Matrix *m);
+
+//Initialise matrix from an array Matrix *Matrix_Create_Array(double *data, int rows, int cols);
 
 //Convert vector to a v-size x 1 matrix
 Matrix *Vector_Convert_Matrix(Vector *v);
 
 //Convert vector to a 1 x v->size matrix
-Matrix *Vector_Create_Transpose(Vector *v);
 
 
 //	Initialising Vectors
@@ -58,6 +67,12 @@ void Vector_Create_Rand(Vector *v);
 //Initialise vector from array
 Vector *Vector_Create_Array(double *data, int size);
 
+//Assign v->Norm
+void Vector_Generate_Norm(Vector *v);
+
+void Vector_Generate_Normalise(Vector *v);
+
+void Vector_Generate_Tranpose(Vector *v);
 
 //	Matrix Operations
 
@@ -70,6 +85,9 @@ Matrix *Matrix_Add(Matrix *m1, Matrix *m2);
 
 //Scale matric by n
 Matrix *Matrix_Scale(Matrix *m, double n);
+
+//Transform a vector with a matrix
+Matrix *Matrix_Transform(Matrix *m, Vector *v);
 
 //Print matrix line-by-line
 void printMatrix(Matrix *);
@@ -90,6 +108,7 @@ double Vector_Product_Dot(Vector *v1, Vector *v2);
 //Get outer product of 2 vectors
 Matrix *Vector_Product_Outer(Vector *v1, Vector *v2);
 
+//Print vector
 void printVector(Vector *v);
 
 
@@ -137,7 +156,7 @@ Matrix *Vector_Transform_Matrix(Matrix *m, Vector *v)
 double Vector_Product_Dot(Vector *v1, Vector *v2)
 {
   Matrix *m1 = Vector_Convert_Matrix(v1);
-  Matrix_Create_Transpose(m1);
+  Matrix_Generate_Transpose(m1);
   Matrix *m3 = Vector_Transform_Matrix(m1->Transpose, v2);
   return m3->data[0][0];
 }
@@ -145,7 +164,7 @@ Matrix *Vector_Product_Outer(Vector *v1, Vector *v2)
 {
   Matrix *m1 = Vector_Convert_Matrix(v1);
   Matrix *m2 = Vector_Convert_Matrix(v2);
-  Matrix_Create_Transpose(m2);
+  Matrix_Generate_Transpose(m2);
   return Matrix_Multiply(m1, m2->Transpose);
 }
 
@@ -183,7 +202,7 @@ void Matrix_Create_Rand(Matrix *m)
 }
 
 
-void Matrix_Create_Transpose(Matrix *m)
+void Matrix_Generate_Transpose(Matrix *m)
 {
   if (m->Transpose != NULL)
   {
@@ -348,4 +367,22 @@ Vector *Vector_Add(Vector *v1, Vector *v2)
     i++;
   }
   return v3;
+}
+
+void Vector_Generate_Norm(Vector *v)
+{
+  int size = v->size;
+  double sumOfSquares = Vector_Product_Dot(v, v);
+  v->Norm = sqrtd(sumOfSquares);
+}
+
+void Vector_Generate_Transpose(Vector *v)
+{
+  v->Transpose = Matrix_Create_Array(v->data, 1, v->size);
+}
+
+Matrix *Matrix_Transform(Matrix *m, Vector *v)
+{
+  Matrix *mv = Vector_Convert_Matrix(v);
+  return Matrix_Multiply(m, mv);
 }
