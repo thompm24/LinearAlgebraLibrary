@@ -6,7 +6,7 @@ double sqrtd(double x);
 double absd(double x);
 
 
-
+//Power operation for doubles
 double powerd(double x, double n)
 {
   double result = 1;
@@ -22,6 +22,7 @@ double powerd(double x, double n)
   return result;
 }
 
+//Power operation for integers
 int poweri(int x, int n)
 {
   int i = 0;
@@ -34,10 +35,10 @@ int poweri(int x, int n)
   return result;
 }
 
-
+//Square root operation for doubles
 double sqrtd(double x) {
     double guess = x;
-    double precision = 0.000001; // Precision of the result
+    double precision = 1e-6; // Precision of the result
     double guessSquared;
 
     if (x < 0) {
@@ -53,6 +54,7 @@ double sqrtd(double x) {
     return guess;
 }
 
+//Absolute value operation for double
 double absd(double x)
 {
   if (x < 0)
