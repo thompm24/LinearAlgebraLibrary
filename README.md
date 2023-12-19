@@ -52,6 +52,10 @@ Matrix Operations:
 
       ReLU               Matrix *Matrix_ReLU(Matrix *m);
 
+      Create from Array  Matrix *Matrix_Create_Array(double *data, int rows, int cols);
+
+      Convert to Array   double *Matrix_Flatten(Matrix *m);
+
       Save to bin file   void Matrix_Save(Matrix *m, char *filename);
 
       Load from bin file Matrix *Matrix_Create_Bin(char *filename);
@@ -73,6 +77,8 @@ Vector Operations:
       Inner Product      double *Vector_Product_Dot(Vector *v1, Vector *v2);
 
       Outer Product      Matrix *Vector_Product_Outer(Vector *v1, Vector *v2);
+
+      Create from Array  Vector *Vector_Create_Array(double *data, int size);
 
 
 
