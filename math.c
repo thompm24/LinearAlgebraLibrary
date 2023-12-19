@@ -22,6 +22,19 @@ double powerd(double x, double n)
   return result;
 }
 
+int poweri(int x, int n)
+{
+  int i = 0;
+  int result = 1;
+  while ((i < n) && (result = x))
+  {
+    result = (i != 0) ? (result * result) : result;
+    i++;
+  }
+  return result;
+}
+
+
 double sqrtd(double x) {
     double guess = x;
     double precision = 0.000001; // Precision of the result

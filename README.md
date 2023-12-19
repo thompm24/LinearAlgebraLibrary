@@ -1,15 +1,60 @@
 
 This is my linear algebra library written in C, designed for educational and development purposes. It provides functionalities for matrix and vector operations, ideal for students, educators, and developers interested in mathematics and computer science.
-Features
+This repository also contains my own math.c file which I am using for all mathematical function not already in stdlib.h.
+
+Structures:
+Structures include:
+
+    struct Matrix
+    {
+      int rows;
+      int cols;
+      double **data;
+      Matrix *Transpose;
+      double determinant;
+      Matrix *Unit;
+    };
+
+    struct Vector
+    {
+      int size;
+      double *data;
+      double Norm;
+      Vector *Unit;
+      Matrix *Transpose;
+    };
+
+Structure attributes can be generated when necessary:
+
+    void Matrix_Create_Empty(Matrix *m, int rows, int cols);
+    void Matrix_Create_Rand(Matrix *m, int rows, int cols);
+    void Matrix_Generate_Transpose(Matrix *m);
+    void Matrix_Generate_Norm(Matrix *m);
+    void Matrix_Generate_Unit(Matrix *m);
+    void Matrix_Generate_Determinant(Matrix *m); //Not finished yet 
+
+    void Vector_Create_Empty(Vector *v, int size);
+    void Vector_Create_Rand(Vector *v, int size);
+    void Vector_Generate_Norm(Vector *v);
+    void Vector_Generate_Unit(Vector *v);
+    void Vector_Generate_Transpose(Vector *v);
+
 
 Matrix Operations:
 
     Support for basic matrix operations such as:
-      Addition
-      Scaling
-      Multiplication
-      Transposition
 
+      Addition           Matrix *Matrix_Add(Matrix *m1, Matrix *m2);
+                      
+      Scaling            Matrix *Matrix_Scale(Matrix *m, double n);
+
+      Multiplication     Matrix *Matrix_Multiply(Matrix *m1, Matrix *m2);
+
+      ReLU               Matrix *Matrix_ReLU(Matrix *m);
+
+      Save to bin file   void Matrix_Save(Matrix *m, char *filename);
+
+      Load from bin file Matrix *Matrix_Create_Bin(char *filename);
   
     In progress:
       Determinant
@@ -20,14 +65,19 @@ Matrix Operations:
 Vector Operations:
 
     Support for basic vector operations such as:
-      Addition
-      Scaling
-      Inner Product
-      Outer Product
+
+      Addition           Vector *Vector_Add(Vector *v1, Vector *v2);
+
+      Scaling            Vector *Vector_Scale(Vector *v1, Vector *v2);
+
+      Inner Product      double *Vector_Product_Dot(Vector *v1, Vector *v2);
+
+      Outer Product      Matrix *Vector_Product_Outer(Vector *v1, Vector *v2);
+
+
+
 
     In progress: 
-      Norm
-      Normalisation
       Angle between 2 vectors
       Projection
       Distance between 2 vectors

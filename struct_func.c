@@ -12,6 +12,7 @@ struct Matrix
   double **data;
   Matrix *Transpose;
   double determinant;
+  Matrix *Unit;
 };
 
 struct Vector
@@ -19,38 +20,50 @@ struct Vector
   int size;
   double *data;
   double Norm;
-  Vector *Normalise;
+  Vector *Unit;
   Matrix *Transpose;
 } ;
 
 
 
-//                        Function Definitions
-
-
-
+//                        Function Prototypes
 
 //	Initialising Matrices
-
 
 //Initialise empty matrix
 void Matrix_Create_Empty(Matrix *m, int rows, int cols);
 
 //Initialise matrix of random values
-void Matrix_Rand(Matrix *m);
+void Matrix_Rand(Matrix *m, int rows, int cols);
 
 //Initialise matrix from array
 Matrix *Matrix_Create_Array(double *data, int rows, int cols);
 
-//Allocates memory and  creates transpose attribute of and matrix;
+//Allocates memory and  creates transpose attribute of a matrix;
 void Matrix_Generate_Transpose(Matrix *m);
 
-void Matrix_Generate_Determinant(Matrix *m);
+//Allocates memory and creates Unit attribute of a n x 1 matrix
+void Matrix_Generate_Unit(Matrix *m);
 
-//Initialise matrix from an array Matrix *Matrix_Create_Array(double *data, int rows, int cols);
+//Allocates memory and creates Norm attribute of a n x 1 matrix
+void Matrix_Generate_Norm(Matrix *m);
+
+//Write matrix to binary file
+void Matrix_Save(Matrix *m, char *filename);
+
+//Convert matrix to double *
+double *Matrix_Flatten(Matrix *m);
+
+//Load matrix from binary file
+Matrix *Matrix_Create_Bin(char *filename);
+
+// NOT DONE void Matrix_Generate_Determinant(Matrix *m);
 
 //Convert vector to a v-size x 1 matrix
 Matrix *Vector_Convert_Matrix(Vector *v);
+//Convert a matrix to a m->row x 1 matrix
+Vector *Matrix_Convert_Vector(Matrix *m);
+
 
 //Convert vector to a 1 x v->size matrix
 
@@ -62,20 +75,24 @@ Matrix *Vector_Convert_Matrix(Vector *v);
 void Vector_Create_Empty(Vector *v, int size);
 
 //Initialise vector of random values
-void Vector_Create_Rand(Vector *v);
+void Vector_Create_Rand(Vector *v, int size);
 
 //Initialise vector from array
 Vector *Vector_Create_Array(double *data, int size);
 
 //Assign v->Norm
 void Vector_Generate_Norm(Vector *v);
+void Vector_Generate_Unit(Vector *v);
 
-void Vector_Generate_Normalise(Vector *v);
+//NOT DONEvoid Vector_Generate_Normalise(Vector *v);
 
 void Vector_Generate_Tranpose(Vector *v);
 
+
 //	Matrix Operations
 
+
+// NOT DONE void Matrix_Generate_Determinant(Matrix *m);
 
 //Multiply 2 matrices
 Matrix *Matrix_Multiply(Matrix *m1, Matrix *m2);
@@ -183,18 +200,19 @@ void Matrix_Create_Empty(Matrix *m, int rows, int cols)
   }
 }
 
-void Matrix_Create_Rand(Matrix *m)
+void Matrix_Create_Rand(Matrix *m, int rows, int cols)
 {
-  int i, j, rows, cols;
-  rows = m->rows;
-  cols = m->cols;
+  int i, j;
+  Matrix_Create_Empty(m, rows, cols);
+  m->rows = rows;
+  m->cols = cols;
   i = 0;
   while (i < rows)
   {
     j = 0;
     while (j < cols)
     {
-      m->data[i][j] = (double)rand() / RAND_MAX;
+      m->data[i][j] = ((double)rand() / RAND_MAX) * poweri(-1, rand() % 2);
       j++;
     }
     i++;
@@ -230,13 +248,13 @@ void Vector_Create_Empty(Vector *v, int size)
   v->data = (double *)malloc(size * sizeof(double));
 }
 
-void Vector_Create_Rand(Vector *v)
+void Vector_Create_Rand(Vector *v, int size)
 {
   int i, size;
-  size = v->size;
+  Vector_Create_Empty(v, size);
   while (i < size)
   {
-    v->data[i] = ((double)rand() / RAND_MAX) / (double)rand(); //populate bias with random numbers which can be greater than 0
+    v->data[i] = poweri(-1, (rand() % 2)) * (((double)rand() / RAND_MAX) / (double)rand()); //populate bias with random numbers which can be greater than 0
     i++;
   }
 }
@@ -271,7 +289,8 @@ Vector *Vector_Create_Array(double *data, int size) {
 
 Matrix *Matrix_Multiply(Matrix *m1, Matrix *m2)
 {
-  int i, j, k, sumRowColij, rows, cols, rows2cols1;
+  int i, j, k, rows, cols, rows2cols1;
+  double sumRowColij;
   Matrix *m3 = (Matrix *)malloc(sizeof(Matrix));
   if (m1->cols != m2->rows)
   {
@@ -323,7 +342,7 @@ Matrix *Matrix_Add(Matrix *m1, Matrix *m2)
 
   if (rows != m2->rows || cols != m2->cols)
   {
-    fprintf(stderr, "Failed matrix addition, matrices do not share dimensions");
+    fprintf(stderr, "Failed matrix addition, matrices do not share dimensions\n");
     printMatrix(m1);
     printMatrix(m2);
     return NULL;
@@ -385,4 +404,188 @@ Matrix *Matrix_Transform(Matrix *m, Vector *v)
 {
   Matrix *mv = Vector_Convert_Matrix(v);
   return Matrix_Multiply(m, mv);
+}
+
+double *Matrix_Flatten(Matrix *m)
+{
+  int rows = m->rows;
+  int cols = m->cols;
+  int newLen = rows * cols;
+  double *newM = (double *)calloc(rows * cols, sizeof(double));
+  int i = 0;
+  int count = 0;
+  while (i < rows)
+  {
+    int j = 0;
+    while (j < cols)
+    {
+      newM[count] = m->data[i][j];
+      j++;
+      count++;
+    }
+    i++;
+  }
+  return newM;
+}
+
+void Matrix_Save(Matrix *m, char *filename)
+{
+  double *data = Matrix_Flatten(m);
+
+  FILE *fptr = fopen(filename, "wb");
+  if (fptr == NULL)
+  {
+    printf("Could not open file");
+    free(data);
+    return;
+  }
+  
+  int rows = m->rows;
+  int cols = m->cols;
+  fwrite(&rows, sizeof(int), 1, fptr);
+  fwrite(&cols, sizeof(int), 1, fptr);
+  fwrite(data, sizeof(double), rows * cols, fptr);
+
+  fclose(fptr);
+  free(data);
+}
+
+Matrix *Matrix_Create_Bin(char *filename)
+{
+  FILE *fptr = fopen(filename, "rb");
+  if (fptr == NULL)
+  {
+    printf("Could not open file\n");
+  }
+
+  int rows;
+  int cols;
+  fread(&rows, sizeof(int), 1, fptr);
+  fread(&cols, sizeof(int), 1, fptr);
+
+  double *arr = (double *)calloc(rows * cols, sizeof(double));
+  fread(arr, sizeof(double), rows *cols, fptr);
+
+  Matrix *m = Matrix_Create_Array(arr, rows, cols);
+  fclose(fptr);
+  free(arr);
+  return m;
+}
+
+Matrix *Matrix_Scale(Matrix *m, double n)
+{
+  int rows = m->rows;
+  int cols = m->cols;
+
+  Matrix *mNew = (Matrix *)malloc(sizeof(Matrix));
+  Matrix_Create_Empty(mNew, rows, cols);
+
+  int i = 0;
+  while (i < rows)
+  {
+    int j = 0;
+    while (j < cols)
+    {
+      mNew->data[i][j] = n * m->data[i][j];
+      j++;
+    }
+    i++;
+  }
+  return mNew;
+}
+
+Matrix *Matrix_Subtract(Matrix *m1, Matrix *m2)
+{
+  if (m1->rows != m2->rows || m1->cols != m2->cols)
+  {
+    printf("Error: rows and cols of matrices do not match and matrix subtraction failed");
+    return NULL;
+  }
+
+  int rows = m1->rows;
+  int cols = m1->cols;
+  
+  Matrix *mNew = (Matrix *)malloc(sizeof(Matrix));
+  Matrix_Create_Empty(mNew, rows, cols);
+
+  int i = 0;
+  while (i < rows)
+  {
+    int j = 0;
+    while (j < cols)
+    {
+      mNew->data[i][j] = m1->data[i][j] - m2->data[i][j];
+      j++;
+    }
+    i++;
+  }
+}
+
+void Matrix_ReLU(Matrix *m)
+{
+  int rows = m->rows;
+  int cols = m->cols;
+  int i = 0;
+  while (i < rows)
+  {
+    int j = 0;
+    while (j < cols)
+    {
+      m->data[i][j] = (m->data[i][j] < 0) ? 0 : m->data[i][j];
+      j++;
+    }
+    i++;
+  }
+}
+
+void Matrix_Generate_Unit(Matrix *m)
+{
+  if (m->cols != 1)
+  {
+    printf("Matrix must have 1 col for norm of vector (%d)\n", m->cols);
+    return;
+  }
+  Vector *v = Matrix_Convert_Vector(m);
+  Vector_Generate_Unit(v);
+  m->Unit = Vector_Convert_Matrix(v->Unit);
+}
+
+
+void Vector_Generate_Unit(Vector *v)
+{
+  Vector_Generate_Norm(v);
+  v->Unit = (Vector *)malloc(sizeof(Vector));
+  Vector_Create_Empty(v->Unit, v->size);
+  int i = 0;
+  while (i < v->size)
+  {
+    v->Unit->data[i] = v->data[i] / v->Norm;
+    i++;
+  }
+}
+
+Vector *Matrix_Convert_Vector(Matrix *m)
+{
+  Vector *v = (Vector *)malloc(sizeof(Vector));
+  int size = m->rows * m->cols;
+  Vector_Create_Empty(v, size);
+  int i = 0;
+  int count = 0;
+  while (i < m->rows)
+  {
+    int j = 0;
+    while (j < m->cols)
+    {
+      v->data[count] = m->data[i][j];
+      j++;
+      count++;
+    }
+    i++;
+  }
+  return v;
+}
+
+void Matrix_Generate_Determinant(Matrix *m)
+{
+
 }
