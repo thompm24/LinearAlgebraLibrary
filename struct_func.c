@@ -11,7 +11,8 @@ struct Matrix
   int cols;
   double **data;
   Matrix *Transpose;
-  double determinant;
+  double Determinant;
+  double Norm;
   Matrix *Unit;
 };
 
@@ -48,8 +49,14 @@ void Matrix_Generate_Unit(Matrix *m);
 //Allocates memory and creates Norm attribute of a n x 1 matrix
 void Matrix_Generate_Norm(Matrix *m);
 
+//Assigns value to determinant attribute of matrix
+void Matrix_Generate_Determinant(Matrix *m);
+//Return a matrix excluding a row and column(For det calculation)
+Matrix *Matrix_Exclude_Col_And_Row(Matrix *m, int row, int col);
+
+
 //Write matrix to binary file
-void Matrix_Save(Matrix *m, char *filename);
+void Matrix_Save_Bin(Matrix *m, char *filename);
 
 //Convert matrix to double *
 double *Matrix_Flatten(Matrix *m);
@@ -103,8 +110,17 @@ Matrix *Matrix_Add(Matrix *m1, Matrix *m2);
 //Scale matric by n
 Matrix *Matrix_Scale(Matrix *m, double n);
 
+//Apply ReLU to matrix
+Matrix *Matrix_ReLU(Matrix *m);
+
 //Transform a vector with a matrix
 Matrix *Matrix_Transform(Matrix *m, Vector *v);
+
+//Calculate determinant of a matrix
+double Matrix_Determinant(Matrix *m);
+
+//Calculate pairwise multiple of 2 matrices
+Matrix *Matrix_Pairwise_Multiplication(Matrix *m1, Matrix *m2);
 
 //Print matrix line-by-line
 void printMatrix(Matrix *);
@@ -177,6 +193,7 @@ double Vector_Product_Dot(Vector *v1, Vector *v2)
   Matrix *m3 = Vector_Transform_Matrix(m1->Transpose, v2);
   return m3->data[0][0];
 }
+
 Matrix *Vector_Product_Outer(Vector *v1, Vector *v2)
 {
   Matrix *m1 = Vector_Convert_Matrix(v1);
@@ -184,8 +201,6 @@ Matrix *Vector_Product_Outer(Vector *v1, Vector *v2)
   Matrix_Generate_Transpose(m2);
   return Matrix_Multiply(m1, m2->Transpose);
 }
-
-
 
 void Matrix_Create_Empty(Matrix *m, int rows, int cols)
 {
@@ -212,7 +227,7 @@ void Matrix_Create_Rand(Matrix *m, int rows, int cols)
     j = 0;
     while (j < cols)
     {
-      m->data[i][j] = ((double)rand() / RAND_MAX) * poweri(-1, rand() % 2);
+      m->data[i][j] = 10 * ((double)rand() / RAND_MAX) * poweri(-1, rand() % 2);
       j++;
     }
     i++;
@@ -226,20 +241,40 @@ void Matrix_Generate_Transpose(Matrix *m)
   {
     return;
   }
+  printf("Matrix dimensions: %d %d\n", m->rows, m->cols);
   m->Transpose = (Matrix *)malloc(sizeof(Matrix));
   Matrix_Create_Empty(m->Transpose, m->cols, m->rows);
   int i, j;
   i = 0;
-  while (i < m->rows)
+  while (i < m->Transpose->rows)
   {
     j = 0;
-    while (j < m->cols)
+    while (j < m->Transpose->cols)
     {
-      m->Transpose->data[j][i] = m->data[i][j];
+      m->Transpose->data[i][j] = m->data[j][i];
       j++;
     }
     i++;
   }
+  printf("Matrix Transpose dimensions: %d %d\n", m->Transpose->rows, m->Transpose->cols);
+}
+
+Matrix *Matrix_Transpose(Matrix *m)
+{
+  Matrix *mNew = (Matrix *)malloc(sizeof(Matrix));
+  Matrix_Create_Empty(mNew, m->cols, m->rows);
+  int i = 0;
+  while (i < m->cols)
+  {
+    int j = 0;
+    while (j < m->rows)
+    {
+      mNew->data[i][j] = m->data[j][i];
+      j++;
+    }
+    i++;
+  }
+  return mNew;
 }
 
 void Vector_Create_Empty(Vector *v, int size)
@@ -250,11 +285,11 @@ void Vector_Create_Empty(Vector *v, int size)
 
 void Vector_Create_Rand(Vector *v, int size)
 {
-  int i, size;
+  int i;
   Vector_Create_Empty(v, size);
   while (i < size)
   {
-    v->data[i] = poweri(-1, (rand() % 2)) * (((double)rand() / RAND_MAX) / (double)rand()); //populate bias with random numbers which can be greater than 0
+    v->data[i] = 10 * poweri(-1, (rand() % 2)) * (((double)rand() / RAND_MAX) / (double)rand()); //populate bias with random numbers which can be greater than 0
     i++;
   }
 }
@@ -428,7 +463,7 @@ double *Matrix_Flatten(Matrix *m)
   return newM;
 }
 
-void Matrix_Save(Matrix *m, char *filename)
+void Matrix_Save_Bin(Matrix *m, char *filename)
 {
   double *data = Matrix_Flatten(m);
 
@@ -519,23 +554,34 @@ Matrix *Matrix_Subtract(Matrix *m1, Matrix *m2)
     }
     i++;
   }
+  return mNew;
 }
 
-void Matrix_ReLU(Matrix *m)
+Matrix *Matrix_ReLU(Matrix *m)
 {
   int rows = m->rows;
   int cols = m->cols;
+  Matrix *mNew = (Matrix *)malloc(sizeof(Matrix));
+  Matrix_Create_Empty(mNew, rows, cols);
   int i = 0;
   while (i < rows)
   {
     int j = 0;
     while (j < cols)
     {
-      m->data[i][j] = (m->data[i][j] < 0) ? 0 : m->data[i][j];
+      mNew->data[i][j] = (m->data[i][j] < 0) ? 0 : m->data[i][j];
       j++;
     }
     i++;
   }
+  return mNew;
+}
+
+void Matrix_Generate_Norm(Matrix *m)
+{
+  Vector *v = Matrix_Convert_Vector(m);
+  Vector_Generate_Norm(v);
+  m->Norm = v->Norm;
 }
 
 void Matrix_Generate_Unit(Matrix *m)
@@ -587,5 +633,163 @@ Vector *Matrix_Convert_Vector(Matrix *m)
 
 void Matrix_Generate_Determinant(Matrix *m)
 {
-
+  if (m->rows != m->cols)
+  {
+    printf("Determinant cannot be calculated for non-square matrix\n");
+    return;
+  }
+  m->Determinant = Matrix_Determinant(m);
 }
+
+double Matrix_Determinant(Matrix *m)
+{
+  double det;
+  if (m->rows != m->cols)
+  {
+    printf("Determinant can only be generated for square matrices\n");
+    return det;
+  }
+  if (m->rows == 2)
+  {
+    det = (m->data[0][0] * m->data[1][1]) - (m->data[1][0] * m->data[0][1]);
+    return det;
+  }
+  if (m->rows != 2)
+  {
+    int i = 0;
+    while (i < m->cols)
+    {
+      Matrix *mLessCol = Matrix_Exclude_Col_And_Row(m, 0, i);
+      double mLessColDet = Matrix_Determinant(mLessCol);
+      det += m->data[0][i] * (poweri(-1, (i % 2))) * mLessColDet;
+      i++;
+    }
+    return det;
+  }
+}
+
+
+
+
+Matrix *Matrix_Exclude_Col_And_Row(Matrix *m, int row, int col)
+{
+  Matrix *mNew = (Matrix *)malloc(sizeof(Matrix));
+  Matrix_Create_Empty(mNew, m->rows - 1, m->cols - 1);
+  int i = 0;
+  int iNew = 0;
+  while (i < m->rows)
+  {
+    (i == row) ? i++ : (void)0;
+    int j = 0;
+    int jNew = 0;
+    while (j < m->cols)
+    {
+      (j == col) ? j++ : (void)0;
+      mNew->data[iNew][jNew] = m->data[i][j];
+      j++;
+      jNew++;
+    }
+    i++;
+    iNew++;
+  }
+  return mNew;
+}
+
+
+Matrix *Matrix_Pairwise_Multiplication(Matrix *m1, Matrix *m2)
+{
+  if ((m1->rows != m2->rows) && (m1->cols != m2->cols))
+  {
+    printf("Matrices must have equal rows and cols\n m1: %d %d\nm2: %d %d\n",
+           m1->rows, m1->cols, m2->rows, m2->cols);
+    return NULL;
+  }
+  Matrix *mNew = (Matrix *)malloc(sizeof(Matrix));
+  Matrix_Create_Empty(mNew, m1->rows, m1->cols);
+
+  int i = 0;
+  while (i < m1->rows)
+  {
+    int j = 0;
+    while (j < m1->cols)
+    {
+      mNew->data[i][j] = m1->data[i][j] * m2->data[i][j];
+      j++;
+    }
+    i++;
+  }
+  return mNew;
+}
+
+Matrix *Matrix_Sum_Columns(Matrix *m)
+{
+  Matrix *mNew = (Matrix *)malloc(sizeof(Matrix));
+  Matrix_Create_Empty(mNew, m->rows, 1);
+  int i = 0;
+  while (i < m->rows)
+  {
+    int j = 0;
+    while (j < m->cols)
+    {
+      mNew->data[i][0] += m->data[i][j];
+      j++;
+    }
+    i++;
+  }
+  return mNew;
+}
+
+void Matrix_Free(Matrix *matrix) {
+    if (matrix != NULL) {
+        if (matrix->data != NULL)
+        {
+            for (int i = 0; i < matrix->rows; i++)
+            {
+                free(matrix->data[i]);
+            }
+            free(matrix->data);
+        }
+        if (matrix->Transpose != NULL)
+        {
+            Matrix_Free(matrix->Transpose);
+        }      
+        if (matrix->Unit != NULL)
+        {
+            Matrix_Free(matrix->Unit);
+        }
+
+        free(matrix);
+    }
+}
+
+void Matrix_Copy(Matrix *dest, Matrix *src) {
+    if (src == NULL || dest == NULL)
+    {
+        return;
+    }
+
+    dest->rows = src->rows;
+    dest->cols = src->cols;
+    dest->Determinant = src->Determinant;
+    dest->Norm = src->Norm;
+
+    dest->data = (double **)malloc(dest->rows * sizeof(double *));
+    for (int i = 0; i < dest->rows; i++) {
+        dest->data[i] = (double *)malloc(dest->cols * sizeof(double));
+        for (int j = 0; j < dest->cols; j++)
+        {
+            dest->data[i][j] = src->data[i][j];
+        }
+    }
+    if (src->Transpose != NULL)
+    {
+        dest->Transpose = (Matrix *)malloc(sizeof(Matrix));
+        Matrix_Copy(dest->Transpose, src->Transpose);
+    }
+    if (src->Unit != NULL)
+    {
+        dest->Unit = (Matrix *)malloc(sizeof(Matrix));
+        Matrix_Copy(dest->Unit, src->Unit);
+    }
+}
+

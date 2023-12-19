@@ -11,7 +11,8 @@ Structures include:
       int cols;
       double **data;
       Matrix *Transpose;
-      double determinant;
+      double Determinant;
+      double *Norm;
       Matrix *Unit;
     };
 
@@ -31,7 +32,8 @@ Structure attributes can be generated when necessary:
     void Matrix_Generate_Transpose(Matrix *m);
     void Matrix_Generate_Norm(Matrix *m);
     void Matrix_Generate_Unit(Matrix *m);
-    void Matrix_Generate_Determinant(Matrix *m); //Not finished yet 
+    void Matrix_Generate_Determinant(Matrix *m);
+    void Matrix_Copy(Matrix *src, Matrix *dest);
 
     void Vector_Create_Empty(Vector *v, int size);
     void Vector_Create_Rand(Vector *v, int size);
@@ -50,7 +52,11 @@ Matrix Operations:
 
       Multiplication     Matrix *Matrix_Multiply(Matrix *m1, Matrix *m2);
 
+      Determinant        double Matrix_Determinant(Matrix *m);
+
       ReLU               Matrix *Matrix_ReLU(Matrix *m);
+
+      Pairwise Multiple  Matrix *Matrix_Pairwise_Multiplication(Matrix *m1, Matrix  *m2);
 
       Create from Array  Matrix *Matrix_Create_Array(double *data, int rows, int cols);
 
@@ -61,7 +67,6 @@ Matrix Operations:
       Load from bin file Matrix *Matrix_Create_Bin(char *filename);
   
     In progress:
-      Determinant
       Inversion
       Eigenvalues and eigenvectors
       Reduced Row Echelon Form
