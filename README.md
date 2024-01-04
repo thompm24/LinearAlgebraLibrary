@@ -84,6 +84,8 @@ Vector Operations:
       Outer Product      Matrix *Vector_Product_Outer(Vector *v1, Vector *v2);
 
       Create from Array  Vector *Vector_Create_Array(double *data, int size);
+      
+      Compare Spans      int Vector_Compare_Span(Vector *v1, Vector *v2);
 
 
 
