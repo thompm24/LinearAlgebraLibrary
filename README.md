@@ -100,3 +100,17 @@ Vector Operations:
 
 To use struct_func in your project, simply include the header file in your C source code:
 #include "struct_func.c"
+
+
+
+
+******MACHINE LEARNING LIBRARY IN PROGRESS*******
+Machine learning library to be added, currently functional other than gradient descent algorithm to be implemented.
+
+Implemented:
+    Neural network struct
+    Forward propagation
+    Loss function
+
+To be implemented:
+    Improved gradient descent
