@@ -104,13 +104,17 @@ To use struct_func in your project, simply include the header file in your C sou
 
 
 
-******MACHINE LEARNING LIBRARY IN PROGRESS*******
+**MACHINE LEARNING LIBRARY IN PROGRESS**
+
 Machine learning library to be added, currently functional other than gradient descent algorithm to be implemented.
 
 Implemented:
     Neural network struct
     Forward propagation
     Loss function
+    Save to bin file
+    Pull from bin file
 
 To be implemented:
     Improved gradient descent
+    
